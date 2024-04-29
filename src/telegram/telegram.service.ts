@@ -102,6 +102,12 @@ export class TelegramService {
   }
 
   private async sendAggregatedTokenInfo(chatId: number, pairs: any[]) {
+    if (!pairs) {
+      this.bot.sendMessage(
+        chatId,
+        `❌ Oops! Sorry we couldnt get that token information.`,
+      );
+    }
     // Extract token name, symbol, and age from the first array element
     const name = pairs[0]?.baseToken?.name;
     const symbol = pairs[0]?.baseToken?.symbol;
@@ -155,3 +161,4 @@ export class TelegramService {
     this.bot.sendMessage(chatId, message);
   }
 }
+
