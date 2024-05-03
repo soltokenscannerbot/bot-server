@@ -193,25 +193,30 @@ export class TelegramService {
 
       // Construct the message
       const message = `
-📌 ${name} (${symbol})
-📌 Address: ${shortenedAddress}
-📝 Description: ${truncatedDescription}
-      
+ ${name} (${symbol})
+
+🏦 Address: ${shortenedAddress}   
 💰 **Token Metrics:**
-- 💲 Price: $${price.toFixed(10)}
-- 🌿 Total Supply: ${totalSupplyFormatted}
-- 💰 MC: $${mcFormatted}
-- 💧 Liq: $${liquidityFormatted}
+ 💲 Price: $${price.toFixed(10)}
+ 🌿 Total Supply: ${totalSupplyFormatted}
+ 💰 MC: $${mcFormatted}
+ 💧 Liq: $${liquidityFormatted}
       
 🛠 **Authorities:**
-- 👨‍💻 Deployer: ${shortenedOwnerAddress}
-- 👤 Mint Authority: ${shortenedOwnerAddress}
+ 👨‍💻 Deployer: ${shortenedOwnerAddress}
+ 👤 Mint Authority: ${shortenedOwnerAddress}
       
 👩‍👧‍👦 **Holders:**
-- 👩‍👧‍👦 Top 10 Holder Balance: ${top10HolderBalanceFormatted}
-- 👩‍👧‍👦 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
-- 💰 Tax: ${tax}%
-- ⚖️ Age: ${age}
+ 📊 Top 10 Holder Balance: ${top10HolderBalanceFormatted}
+ 📊 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
+ 💰 Tax: ${tax}%
+ ⚖️ Age: ${age}
+
+ 📖 Description: ${truncatedDescription}
+
+ https://t.me/Alphadevsol_bot
+
+ 📈 Birdeye | 📈 DexScreen | 📈 Dextools | 🔥 Raydium |  ⚖️ Owner  |  ⚖️ Pair | Chart
     
       `;
 
@@ -249,3 +254,21 @@ export class TelegramService {
 // Tax: 4.99 SOL | 0.0% PRINT
 
 // DYOR/NFA: Automated report.
+
+// Caney Est ($YEEZY)
+
+// 🪅 CA: Hce1hZx7takFkgd6BGjkxrvfbCGtaCYT26ADw2YgKv3B 🅲
+// 🎯 Exchange: Raydium
+// 💡 Market Cap: $1.22K
+// 💧 Liquidity: $1K
+// 💰 Token Price: $0.0001222
+// ⛽ Pooled SOL: 6.3 SOL
+// 🔥 Burn: 100%
+// 👤 Renounced: ✅
+
+// 📖 Description:
+// caney est hav rise frm da trenches and come 2 solona. buy da new yeezys 4 da culture.
+
+// https://t.me/CaneyEst
+
+// 📈 Birdeye | 📈 DexScreen | 📈 Dextools | 🔥 Raydium |  ⚖️ Owner  |  ⚖️ Pair | Chart
