@@ -12,7 +12,7 @@ dotenv.config();
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const BIRDSEYEAPI_KEY = process.env.BIRDSEYEAPI_KEY;
 const welcomeMessage = `
-👋 Welcome to SolTokenScannerBot! 
+👋 Welcome to Alphadevbotsol 
 
 To search for token information, simply send the token address as a message.
 
