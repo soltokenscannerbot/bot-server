@@ -64,10 +64,10 @@ export class TelegramService {
       // Valid token address
       this.logger.debug(`Valid token address received: ${tokenAddress}`);
 
-      this.bot.sendMessage(
-        chatId,
-        `🎉 Excellent choice! You've provided a valid token address: ${tokenAddress}. 🔍 I'll begin retrieving information about this token. Please wait a moment.`,
-      );
+      // this.bot.sendMessage(
+      //   chatId,
+      //   `🎉 Excellent choice! You've provided a valid token address: ${tokenAddress}. 🔍 I'll begin retrieving information about this token. Please wait a moment.`,
+      // );
 
       // Send typing indicator to show that the bot is typing
       this.bot.sendChatAction(chatId, 'typing');
@@ -147,24 +147,24 @@ export class TelegramService {
       //this.logger.debug('Security data', securityData);
       //this.logger.debug('Overview data', overviewData);
       // Extract relevant information from security data
-      const tax = securityData.transferFeeData || '_';
+      const tax = securityData.transferFeeData || '0';
       const creationTime = securityData.creationTime;
       const ownerAddress = securityData.ownerAddress;
       const top10HolderBalance = securityData.top10HolderBalance;
       const top10HolderPercent = securityData.top10HolderPercent
         ? securityData.top10HolderPercent
-        : '_';
+        : '🚫';
       const totalSupply = securityData.totalSupply
         ? securityData.totalSupply
-        : '_';
+        : '🚫';
 
       // Extract relevant information from overview data
       const symbol = overviewData.symbol;
       const name = overviewData.name;
-      const address = overviewData.address;
+      const address = overviewData.address ? overviewData.address : '🚫';
       const description = overviewData.extensions
         ? overviewData.extensions.description
-        : '__';
+        : '🚫';
 
       const liquidity = overviewData.liquidity;
       const price = overviewData.price;
@@ -173,55 +173,70 @@ export class TelegramService {
       // Shorten the owner address
       const shortenedOwnerAddress = ownerAddress
         ? shortenAddress(ownerAddress)
-        : '_';
-      const shortenedAddress = address ? shortenAddress(address) : '_';
-      const age = creationTime ? calculateAge(creationTime) : '_';
+        : '🚫';
+
+      // Define authorities message
+      let authoritiesMessage = '';
+
+      if (!ownerAddress) {
+        authoritiesMessage = '🛠 **Authorities:**\n👤 Renounced: ✅';
+      } else {
+        authoritiesMessage = `
+🛠 **Authorities:**
+👨‍💻 Deployer: ${shortenedOwnerAddress}
+👤 Mint Authority: ${shortenedOwnerAddress}`;
+      }
+
+      const age = creationTime ? calculateAge(creationTime) : '🚫';
 
       //formated value
-      const mcFormatted = mc ? formatLargeNumber(mc) : '_';
-      const liquidityFormatted = liquidity ? formatLargeNumber(liquidity) : '_';
+      const mcFormatted = mc ? formatLargeNumber(mc) : '🚫';
+      const liquidityFormatted = liquidity
+        ? formatLargeNumber(liquidity)
+        : '🚫';
       const top10HolderBalanceFormatted = top10HolderBalance
         ? formatLargeNumber(top10HolderBalance)
-        : '_';
+        : '🚫';
       const totalSupplyFormatted = totalSupply
         ? formatLargeNumber(totalSupply)
-        : '_';
+        : '🚫';
 
       const truncatedDescription = description
         ? description.slice(0, 100)
-        : '_';
+        : '🚫';
 
       // Construct the message
       const message = `
  ${name} (${symbol})
 
-🏦 Address: ${shortenedAddress}   
+🏦 Address: <i>${address}</i>  
+
 💰 **Token Metrics:**
- 💲 Price: $${price.toFixed(10)}
- 🌿 Total Supply: ${totalSupplyFormatted}
- 💰 MC: $${mcFormatted}
- 💧 Liq: $${liquidityFormatted}
+💲 Price: $${price.toFixed(10)}
+🌿 Total Supply: ${totalSupplyFormatted}
+💰 MC: $${mcFormatted}
+💧 Liq: $${liquidityFormatted}
       
-🛠 **Authorities:**
- 👨‍💻 Deployer: ${shortenedOwnerAddress}
- 👤 Mint Authority: ${shortenedOwnerAddress}
+${authoritiesMessage}
       
 👩‍👧‍👦 **Holders:**
- 📊 Top 10 Holder Balance: ${top10HolderBalanceFormatted}
- 📊 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
- 💰 Tax: ${tax}%
- ⚖️ Age: ${age}
+📊 Top 10 Holder Balance: ${top10HolderBalanceFormatted}
+📊 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
+💰 Tax: ${tax}%
+⚖️ Age: ${age}
 
- 📖 Description: ${truncatedDescription}
+📖 Description:  <em>${truncatedDescription}</em>
 
- https://t.me/Alphadevsol_bot
+🔗 <a href="https://t.me/Alphadevsol_bot">Alphadevbotsol</a>
 
- 📈 Birdeye | 📈 DexScreen | 📈 Dextools | 🔥 Raydium |  ⚖️ Owner  |  ⚖️ Pair | Chart
+📈 <a href="https://birdeye.so/token/${address}">Birdeye</a> | 📈 <a href="https://dexscreener.com/solana/${address}">DexScreen</a> | 📈 <a href="https://www.dextools.io/app/en/solana/pair-explorer/${address}" >Dextools</a> | 🔥 <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${address}">Raydium</a> |  ⚖️<a href="https://solscan.io/account/${ownerAddress ? ownerAddress : address}" >Owner</a>  
     
       `;
 
       // Send the message to the user
-      this.bot.sendMessage(chatId, message);
+      await this.bot.sendMessage(chatId, message, {
+        parse_mode: 'HTML',
+      });
     }
   }
 }
