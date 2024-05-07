@@ -1,16 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as TelegramBot from 'node-telegram-bot-api';
+import * as solana from '@solana/web3.js';
 import * as dotenv from 'dotenv';
 import {
   calculateAge,
   formatLargeNumber,
   shortenAddress,
 } from 'src/utils/addressUtils';
+import { getBurnPercentage, queryLpByToken } from 'src/utils/lpUtils';
 
 dotenv.config();
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const BIRDSEYEAPI_KEY = process.env.BIRDSEYEAPI_KEY;
+const SHYFT_API_KEY = process.env.SHYFT_API_KEY;
+
+const rpcEndpoint = `https://rpc.shyft.to/?api_key=${SHYFT_API_KEY}`;
+
+const connection = new solana.Connection(rpcEndpoint);
+
 const welcomeMessage = `
 👋 Welcome to Alphadevbotsol 
 
@@ -75,7 +83,7 @@ export class TelegramService {
       try {
         // Fetch token security data
         if (!BIRDSEYEAPI_KEY) {
-          this.bot.sendMessage(chatId, errorMessage);
+          //this.bot.sendMessage(chatId, errorMessage);
           throw new Error('No API key found');
         }
 
@@ -96,7 +104,7 @@ export class TelegramService {
           options,
         );
         if (!securityResponse.ok && !overviewResponse.ok) {
-          this.bot.sendMessage(chatId, errorMessage);
+          //this.bot.sendMessage(chatId, errorMessage);
           throw new Error(
             'Failed to fetch token security data, Fetch Data response was not ok',
           );
@@ -114,7 +122,7 @@ export class TelegramService {
       } catch (error) {
         // Log and send error message to user if API request fails
         this.logger.error(`Error fetching token report: ${error.message}`);
-        this.bot.sendMessage(chatId, errorMessage);
+        //this.bot.sendMessage(chatId, errorMessage);
       }
     } else {
       // Invalid token address
@@ -122,10 +130,10 @@ export class TelegramService {
         `Invalid token address received: ${tokenAddress} ${tokenAddress.length}`,
       );
       // Send a message to the user informing them about the invalid token address format
-      this.bot.sendMessage(
-        chatId,
-        `❌ Oops! It seems like the token address you sent is invalid. Please make sure it's 44 characters long and consists only of alphanumeric characters.`,
-      );
+      // this.bot.sendMessage(
+      //   chatId,
+      //   `❌ Oops! It seems like the token address you sent is invalid. Please make sure it's 44 characters long and consists only of alphanumeric characters.`,
+      // );
     }
   }
 
@@ -139,13 +147,11 @@ export class TelegramService {
       throw new Error('Token Security data and Overview data not found');
     }
     if (Object.keys(overviewData).length === 0) {
-      this.bot.sendMessage(
-        chatId,
-        `❌ Oops! Sorry we couldnt fetch the token information`,
-      );
+      // this.bot.sendMessage(
+      //   chatId,
+      //   `❌ Oops! Sorry we couldnt fetch the token information`,
+      // );
     } else {
-      //this.logger.debug('Security data', securityData);
-      //this.logger.debug('Overview data', overviewData);
       // Extract relevant information from security data
       const tax = securityData.transferFeeData || '0';
       const creationTime = securityData.creationTime;
@@ -205,6 +211,9 @@ export class TelegramService {
         ? description.slice(0, 100)
         : '🚫';
 
+      const info: any = await queryLpByToken(overviewData.address);
+      const burnPct = await this.getBurnInfo(info);
+
       // Construct the message
       const message = `
  ${name} (${symbol})
@@ -224,6 +233,7 @@ ${authoritiesMessage}
 📊 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
 💰 Tax: ${tax}%
 ⚖️ Age: ${age}
+🔥 Burn: ${burnPct ? `${burnPct.toFixed()}%` : '❌'}
 
 📖 Description:  <em>${truncatedDescription}</em>
 
@@ -239,51 +249,30 @@ ${authoritiesMessage}
       });
     }
   }
+
+  private async getBurnInfo(info: any) {
+    if (info) {
+      const lpMint = info.Raydium_LiquidityPoolv4[0].lpMint;
+      //this.logger.debug('lpMint', lpMint);
+      //Once we have the lpMint address, we need to fetch the current token supply and decimals
+      const parsedAccInfo: any = await connection.getParsedAccountInfo(
+        new solana.PublicKey(lpMint),
+      );
+      const mintInfo = parsedAccInfo?.value?.data?.parsed?.info;
+
+      //We divide the values based on the mint decimals
+      const lpReserve =
+        info.Raydium_LiquidityPoolv4[0].lpReserve /
+        Math.pow(10, mintInfo?.decimals);
+      const actualSupply = mintInfo?.supply / Math.pow(10, mintInfo?.decimals);
+      // console.log(
+      //   `lpMint: ${lpMint}, Reserve: ${lpReserve}, Actual Supply: ${actualSupply}`,
+      // );
+
+      //Calculate burn percentage
+      const burnPct = getBurnPercentage(lpReserve, actualSupply);
+      console.log(`${burnPct} LP burned`);
+      return burnPct;
+    }
+  }
 }
-
-// 📌 Print Protocol (PRINT)
-// ⚠ Mutable Metadata | 8.0% Tax
-
-// 📌 Pair: 8rTx...Uvdr
-// 👨‍💻 Deployer: 8gy2...mmRN
-// 👤 Owner: *RENOUNCED
-// 🔸 Chain: SOL | ⚖️ Age: 20d
-// 🌿 Mint: No ✅ | Liq: ❌ | Tax: 8.0%
-// ⚡ Unibot | Banana | Shuriken | STBot | BonkBot
-
-// 💰 MC: $7.34M | Liq: 845.3K (11%)
-// 📈 24h: 3.1% | V: $550.2K | B:1K S:511
-// 📊 ⚡ Photon HyperSpeed ⚡ | Birdeye | DexS
-
-// 💲 Price: $0.000734
-// 💵 Launch MC: $86.2K (85x)
-// 👆 ATH: $31.01M (359x)
-// 🔗 Website
-
-// 📊 TS: 9.998B
-// 👩‍👧‍👦 Holders: 28K | Top10: 22.49%
-// 💸 Airdrops: No Airdrops
-
-// 💵 TEAM WALLETS
-// Deployer 4.99 SOL | 0.0% PRINT
-// Tax: 4.99 SOL | 0.0% PRINT
-
-// DYOR/NFA: Automated report.
-
-// Caney Est ($YEEZY)
-
-// 🪅 CA: Hce1hZx7takFkgd6BGjkxrvfbCGtaCYT26ADw2YgKv3B 🅲
-// 🎯 Exchange: Raydium
-// 💡 Market Cap: $1.22K
-// 💧 Liquidity: $1K
-// 💰 Token Price: $0.0001222
-// ⛽ Pooled SOL: 6.3 SOL
-// 🔥 Burn: 100%
-// 👤 Renounced: ✅
-
-// 📖 Description:
-// caney est hav rise frm da trenches and come 2 solona. buy da new yeezys 4 da culture.
-
-// https://t.me/CaneyEst
-
-// 📈 Birdeye | 📈 DexScreen | 📈 Dextools | 🔥 Raydium |  ⚖️ Owner  |  ⚖️ Pair | Chart
