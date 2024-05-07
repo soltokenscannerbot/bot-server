@@ -48,8 +48,9 @@ export class TelegramService {
     if (text.startsWith('/')) {
       // Handle commands separately
       this.onStart(chatId, text);
-    } else {
-      // Regular message, proceed with token address validation
+    }
+    // Check if the recieved message is a tokenAddress
+    if (text.length >= 43 && /^[a-zA-Z0-9]+$/.test(text)) {
       this.handleTokenAddress(chatId, text);
     }
   };
@@ -67,73 +68,55 @@ export class TelegramService {
   };
 
   private async handleTokenAddress(chatId: number, tokenAddress: string) {
-    // Check if the received text is a valid token address (44 characters)
-    if (tokenAddress.length === 44 && /^[a-zA-Z0-9]+$/.test(tokenAddress)) {
-      // Valid token address
-      this.logger.debug(`Valid token address received: ${tokenAddress}`);
+    // Valid token address
+    this.logger.debug(`Valid token address received: ${tokenAddress}`);
 
-      // this.bot.sendMessage(
-      //   chatId,
-      //   `🎉 Excellent choice! You've provided a valid token address: ${tokenAddress}. 🔍 I'll begin retrieving information about this token. Please wait a moment.`,
-      // );
+    // Send typing indicator to show that the bot is typing
+    this.bot.sendChatAction(chatId, 'typing');
 
-      // Send typing indicator to show that the bot is typing
-      this.bot.sendChatAction(chatId, 'typing');
-
-      try {
-        // Fetch token security data
-        if (!BIRDSEYEAPI_KEY) {
-          //this.bot.sendMessage(chatId, errorMessage);
-          throw new Error('No API key found');
-        }
-
-        const options = {
-          method: 'GET',
-          headers: { 'X-API-KEY': BIRDSEYEAPI_KEY },
-        };
-
-        // Make API request to get token security data
-        const securityResponse = await fetch(
-          `https://public-api.birdeye.so/defi/token_security?address=${tokenAddress}`,
-          options,
-        );
-
-        // Make API request to get token overview data
-        const overviewResponse = await fetch(
-          `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
-          options,
-        );
-        if (!securityResponse.ok && !overviewResponse.ok) {
-          //this.bot.sendMessage(chatId, errorMessage);
-          throw new Error(
-            'Failed to fetch token security data, Fetch Data response was not ok',
-          );
-        }
-        if (securityResponse.ok && overviewResponse.ok) {
-          const securityData = await securityResponse.json();
-          const overviewData = await overviewResponse.json();
-
-          this.sendAggregatedTokenInfo(
-            chatId,
-            securityData.data,
-            overviewData.data,
-          );
-        }
-      } catch (error) {
-        // Log and send error message to user if API request fails
-        this.logger.error(`Error fetching token report: ${error.message}`);
+    try {
+      // Fetch token security data
+      if (!BIRDSEYEAPI_KEY) {
         //this.bot.sendMessage(chatId, errorMessage);
+        throw new Error('No API key found');
       }
-    } else {
-      // Invalid token address
-      this.logger.debug(
-        `Invalid token address received: ${tokenAddress} ${tokenAddress.length}`,
+
+      const options = {
+        method: 'GET',
+        headers: { 'X-API-KEY': BIRDSEYEAPI_KEY },
+      };
+
+      // Make API request to get token security data
+      const securityResponse = await fetch(
+        `https://public-api.birdeye.so/defi/token_security?address=${tokenAddress}`,
+        options,
       );
-      // Send a message to the user informing them about the invalid token address format
-      // this.bot.sendMessage(
-      //   chatId,
-      //   `❌ Oops! It seems like the token address you sent is invalid. Please make sure it's 44 characters long and consists only of alphanumeric characters.`,
-      // );
+
+      // Make API request to get token overview data
+      const overviewResponse = await fetch(
+        `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
+        options,
+      );
+      if (!securityResponse.ok && !overviewResponse.ok) {
+        //this.bot.sendMessage(chatId, errorMessage);
+        throw new Error(
+          'Failed to fetch token security data, Fetch Data response was not ok',
+        );
+      }
+      if (securityResponse.ok && overviewResponse.ok) {
+        const securityData = await securityResponse.json();
+        const overviewData = await overviewResponse.json();
+
+        this.sendAggregatedTokenInfo(
+          chatId,
+          securityData.data,
+          overviewData.data,
+        );
+      }
+    } catch (error) {
+      // Log and send error message to user if API request fails
+      this.logger.error(`Error fetching token report: ${error.message}`);
+      //this.bot.sendMessage(chatId, errorMessage);
     }
   }
 
