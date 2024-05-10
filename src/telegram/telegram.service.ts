@@ -41,17 +41,19 @@ export class TelegramService {
   }
 
   onReceiveMessage = async (msg: TelegramBot.Message) => {
-    const chatId = msg.chat.id;
-    const text = msg.text.trim();
+    if (msg.chat.id && msg.text) {
+      const chatId = msg.chat.id;
+      const text = msg.text.trim();
 
-    // Check if the received message is a command
-    if (text.startsWith('/')) {
-      // Handle commands separately
-      this.onStart(chatId, text);
-    }
-    // Check if the recieved message is a tokenAddress
-    if (text.length >= 43 && /^[a-zA-Z0-9]+$/.test(text)) {
-      this.handleTokenAddress(chatId, text);
+      // Check if the received message is a command
+      if (text.startsWith('/')) {
+        // Handle commands separately
+        this.onStart(chatId, text);
+      }
+      // Check if the recieved message is a tokenAddress
+      if (text.length >= 43 && /^[a-zA-Z0-9]+$/.test(text)) {
+        this.handleTokenAddress(chatId, text);
+      }
     }
   };
 
