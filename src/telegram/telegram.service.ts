@@ -166,6 +166,8 @@ export class TelegramService {
         ? shortenAddress(ownerAddress)
         : '🚫';
 
+      const ATH = await this.getAllTimeHighInfo(creationTime, address);
+
       // Define authorities message
       let authoritiesMessage = '';
 
@@ -218,6 +220,7 @@ ${authoritiesMessage}
 📊 Top 10 Holder Percentage: ${(top10HolderPercent * 100).toFixed(2)}%
 💰 Tax: ${tax}%
 ⚖️ Age: ${age}
+${ATH ? `🚀 ATH: $${ATH.toFixed(6)}` : ``}
 🔥 Burn: ${burnPct ? `${burnPct.toFixed()}%` : '❌'}
 
 📖 Description:  <em>${truncatedDescription}</em>
@@ -258,6 +261,35 @@ ${authoritiesMessage}
       const burnPct = getBurnPercentage(lpReserve, actualSupply);
       console.log(`${burnPct} LP burned`);
       return burnPct;
+    }
+  }
+
+  private async getAllTimeHighInfo(
+    unixTime: number,
+    address: string,
+  ): Promise<number> {
+    const options = {
+      method: 'GET',
+      headers: { 'X-API-KEY': BIRDSEYEAPI_KEY },
+    };
+
+    // Calculate time_to as Date.now()
+    const time_to = Math.floor(Date.now() / 1000);
+
+    const url = `https://public-api.birdeye.so/defi/history_price?address=${address}&address_type=token&type=15m&time_from=${unixTime}&time_to=${time_to}`;
+
+    try {
+      // Fetch data from the endpoint
+      const response = await fetch(url, options);
+      const data = await response.json();
+      // Extract the highest value from the items
+      const items = data.data.items;
+      const highestValue = Math.max(...items.map((item: any) => item.value));
+      return highestValue;
+    } catch (error) {
+      // Handle errors
+      console.error('Error fetching data:', error);
+      return null;
     }
   }
 }
